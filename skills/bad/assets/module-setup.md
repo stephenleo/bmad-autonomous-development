@@ -144,8 +144,15 @@ Record `user_name` → `config.user.yaml`; `communication_language` and
 
 ## Step 6: BAD Configuration
 
-**Default priority** (highest wins): existing config values > `./assets/module.yaml` defaults.
+**Default priority** (highest wins): existing config values > harness-aware defaults (below) > `./assets/module.yaml` defaults.
 **If `--headless` / `accept all defaults`:** skip this step entirely and use defaults.
+
+**Harness-aware model defaults.** Before resolving `model_standard` / `model_quality`, branch on the `current_harness` detected in Step 2. If the existing config already has values, keep them; otherwise pick from this table:
+
+| Current harness  | `model_standard` default | `model_quality` default |
+|------------------|--------------------------|-------------------------|
+| `openai-codex`   | `gpt-5.3-codex default`          | `gpt-5.4 default`               |
+| anything else    | `sonnet`                 | `opus`                  |
 
 First, **print all current config values** as a formatted block so the user can review them:
 
@@ -162,11 +169,11 @@ Universal settings:
   context_compaction_threshold  [<value>] — Context % to trigger compaction
   stale_timeout_minutes         [<value>] — Inactivity minutes before watchdog alerts
 
-Claude Code settings:
+Model & rate-limit settings (current harness: <current_harness>):
   model_standard           [<value>] — Model for story/dev/PR steps
   model_quality            [<value>] — Model for code review
-  api_five_hour_threshold  [<value>] — 5-hour usage % to pause
-  api_seven_day_threshold  [<value>] — 7-day usage % to pause
+  api_five_hour_threshold  [<value>] — 5-hour usage % to pause (Claude Code only)
+  api_seven_day_threshold  [<value>] — 7-day usage % to pause (Claude Code only)
 ```
 
 Then invoke the **`AskUserQuestion`** tool (your only output for this turn — do not proceed
@@ -215,8 +222,8 @@ Write a temp JSON file with collected answers structured as:
     "stale_timeout_minutes": "60",
     "timer_support": true,
     "monitor_support": true,
-    "model_standard": "sonnet",
-    "model_quality": "opus",
+    "model_standard": "<resolved in Step 6 — sonnet on Claude Code, gpt-5.3-codex default on openai-codex>",
+    "model_quality": "<resolved in Step 6 — opus on Claude Code, gpt-5.4 default on openai-codex>",
     "api_five_hour_threshold": "80",
     "api_seven_day_threshold": "95"
   }

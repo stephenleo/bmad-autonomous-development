@@ -50,8 +50,8 @@ Load base values from the `bad` section of `_bmad/config.yaml` at startup. Then 
 |----------|-----------|---------|-------------|
 | `MAX_PARALLEL_STORIES` | `max_parallel_stories` | `3` | Max stories to run in a single batch |
 | `WORKTREE_BASE_PATH` | `worktree_base_path` | `.worktrees` | Root directory for git worktrees |
-| `MODEL_STANDARD` | `model_standard` | `sonnet` | Model for all subagents except Step 5 (code review): Phase 0, Phase 1 Epic-Start, Steps 1–4 and 6–7, Phase 3 (merge + cleanup), Phase 4 (assessment + retrospective) |
-| `MODEL_QUALITY` | `model_quality` | `opus` | Model for Step 5 (code review) |
+| `MODEL_STANDARD` | `model_standard` | `sonnet` (Claude Code) / `gpt-5.3-codex default` (Codex) | Model for all subagents except Step 5 (code review): Phase 0, Phase 1 Epic-Start, Steps 1–4 and 6–7, Phase 3 (merge + cleanup), Phase 4 (assessment + retrospective) |
+| `MODEL_QUALITY` | `model_quality` | `opus` (Claude Code) / `gpt-5.4 default` (Codex) | Model for Step 5 (code review) |
 | `RETRO_TIMER_SECONDS` | `retro_timer_seconds` | `600` | Auto-retrospective countdown after epic completion (10 min) |
 | `WAIT_TIMER_SECONDS` | `wait_timer_seconds` | `3600` | Post-batch wait before re-checking PR status (1 hr) |
 | `CONTEXT_COMPACTION_THRESHOLD` | `context_compaction_threshold` | `80` | Context window % at which to compact/summarise context |
@@ -63,6 +63,8 @@ Load base values from the `bad` section of `_bmad/config.yaml` at startup. Then 
 | `API_USAGE_THRESHOLD` | `api_usage_threshold` | `80` | (Other harnesses) Generic API usage % that triggers a pause |
 | `RUN_CI_LOCALLY` | `run_ci_locally` | `false` | When `true`, skip GitHub Actions and always run the local CI fallback |
 | `AUTO_PR_MERGE` | `auto_pr_merge` | `false` | When `true`, auto-merge batch PRs sequentially (lowest → highest) before Phase 4 |
+
+`MODEL_STANDARD` and `MODEL_QUALITY` defaults are chosen at setup time based on the detected current harness (see `./assets/module-setup.md` Step 6). Override via `/bad configure` or by editing `_bmad/config.yaml`.
 
 After resolving all values, print the active configuration so the user can confirm before Phase 0 begins:
 ```
