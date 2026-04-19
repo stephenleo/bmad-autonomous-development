@@ -50,13 +50,13 @@ Load base values from the `bad` section of `_bmad/config.yaml` at startup. Then 
 |----------|-----------|---------|-------------|
 | `MAX_PARALLEL_STORIES` | `max_parallel_stories` | `3` | Max stories to run in a single batch |
 | `WORKTREE_BASE_PATH` | `worktree_base_path` | `.worktrees` | Root directory for git worktrees |
-| `MODEL_STANDARD` | `model_standard` | `sonnet` | Model for all subagents except Step 5 (code review): Phase 0, Phase 1 Epic-Start, Steps 1–4 and 6–7, Phase 3 (merge + cleanup), Phase 4 (assessment + retrospective) |
-| `MODEL_QUALITY` | `model_quality` | `opus` | Model for Step 5 (code review) |
+| `MODEL_STANDARD` | `model_standard` | `sonnet` (Claude Code) / `gpt-5.3-codex default` (Codex) | Model for all subagents except Step 5 (code review): Phase 0, Phase 1 Epic-Start, Steps 1–4 and 6–7, Phase 3 (merge + cleanup), Phase 4 (assessment + retrospective) |
+| `MODEL_QUALITY` | `model_quality` | `opus` (Claude Code) / `gpt-5.4 default` (Codex) | Model for Step 5 (code review) |
 | `RETRO_TIMER_SECONDS` | `retro_timer_seconds` | `600` | Auto-retrospective countdown after epic completion (10 min) |
 | `WAIT_TIMER_SECONDS` | `wait_timer_seconds` | `3600` | Post-batch wait before re-checking PR status (1 hr) |
 | `CONTEXT_COMPACTION_THRESHOLD` | `context_compaction_threshold` | `80` | Context window % at which to compact/summarise context |
 | `STALE_TIMEOUT_MINUTES` | `stale_timeout_minutes` | `60` | Minutes of subagent inactivity before watchdog alerts (0 = disabled) |
-| `TIMER_SUPPORT` | `timer_support` | `true` | When `true`, use native platform timers; when `false`, use prompt-based continuation |
+| `TIMER_SUPPORT` | `timer_support` | `cron` (Claude Code) / `blocking-sleep` (Codex) / `prompt` (others) | `cron` uses `CronCreate`; `blocking-sleep` uses a shell `sleep N` that auto-fires when it returns; `prompt` waits for a user reply. Legacy `true`→`cron`, `false`→`prompt` |
 | `MONITOR_SUPPORT` | `monitor_support` | `true` | When `true`, use the Monitor tool for CI and PR-merge polling; when `false`, fall back to manual polling loops (required for Bedrock/Vertex/Foundry) |
 | `API_FIVE_HOUR_THRESHOLD` | `api_five_hour_threshold` | `80` | (Claude Code) 5-hour rate limit % that triggers a pause |
 | `API_SEVEN_DAY_THRESHOLD` | `api_seven_day_threshold` | `95` | (Claude Code) 7-day rate limit % that triggers a pause |
@@ -64,9 +64,11 @@ Load base values from the `bad` section of `_bmad/config.yaml` at startup. Then 
 | `RUN_CI_LOCALLY` | `run_ci_locally` | `false` | When `true`, skip GitHub Actions and always run the local CI fallback |
 | `AUTO_PR_MERGE` | `auto_pr_merge` | `false` | When `true`, auto-merge batch PRs sequentially (lowest → highest) before Phase 4 |
 
+`MODEL_STANDARD` and `MODEL_QUALITY` defaults are chosen at setup time based on the detected current harness (see `./assets/module-setup.md` Step 6). Override via `/bad configure` or by editing `_bmad/config.yaml`.
+
 After resolving all values, print the active configuration so the user can confirm before Phase 0 begins:
 ```
-⚙️ BAD config: MAX_PARALLEL_STORIES=3, RUN_CI_LOCALLY=false, AUTO_PR_MERGE=false, MODEL_STANDARD=sonnet, MODEL_QUALITY=opus, TIMER_SUPPORT=true, ...
+⚙️ BAD config: MAX_PARALLEL_STORIES=3, RUN_CI_LOCALLY=false, AUTO_PR_MERGE=false, MODEL_STANDARD=sonnet, MODEL_QUALITY=opus, TIMER_SUPPORT=cron, ...
 ```
 
 ---
@@ -184,7 +186,7 @@ Spawn before Phase 2 when starting a new epic (blocking — wait for completion 
 You are the epic test design agent for {current_epic_name}.
 Working directory: {repo_root}. Auto-approve all tool calls (yolo mode).
 
-1. Run /bmad-testarch-test-design for {current_epic_name}.
+1. Run the `bmad-testarch-test-design` skill for {current_epic_name}.
 2. Commit any new test plan files.
 
 Report: success or failure with error details.
@@ -237,7 +239,7 @@ Working directory: {repo_root}. Auto-approve all tool calls (yolo mode).
 2. Change into the worktree directory:
      cd {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}
 
-3. Run /bmad-create-story {number}-{short_description}.
+3. Run the `bmad-create-story` skill for {number}-{short_description}.
 
 4. Run "validate story {number}-{short_description}". For every finding,
    apply a fix directly to the story file using your best engineering judgement.
@@ -258,7 +260,7 @@ You are the Step 2 ATDD agent for story {number}-{short_description}.
 Working directory: {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}.
 Auto-approve all tool calls (yolo mode).
 
-1. Run /bmad-testarch-atdd {number}-{short_description}.
+1. Run the `bmad-testarch-atdd` skill for {number}-{short_description}.
 2. Commit any generated test files.
 3. Update sprint-status.yaml at the REPO ROOT:
      {repo_root}/_bmad-output/implementation-artifacts/sprint-status.yaml
@@ -275,7 +277,7 @@ You are the Step 3 developer for story {number}-{short_description}.
 Working directory: {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}.
 Auto-approve all tool calls (yolo mode).
 
-1. Run /bmad-dev-story {number}-{short_description}.
+1. Run the `bmad-dev-story` skill for {number}-{short_description}.
 2. Commit all changes when implementation is complete.
 3. Update sprint-status.yaml at the REPO ROOT:
      {repo_root}/_bmad-output/implementation-artifacts/sprint-status.yaml
@@ -292,7 +294,7 @@ You are the Step 4 test reviewer for story {number}-{short_description}.
 Working directory: {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}.
 Auto-approve all tool calls (yolo mode).
 
-1. Run /bmad-testarch-test-review {number}-{short_description}.
+1. Run the `bmad-testarch-test-review` skill for {number}-{short_description}.
 2. Apply all findings using your best engineering judgement.
 3. Commit any changes from the review.
 
@@ -307,7 +309,7 @@ You are the Step 5 code reviewer for story {number}-{short_description}.
 Working directory: {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}.
 Auto-approve all tool calls (yolo mode).
 
-1. Run /bmad-code-review {number}-{short_description}.
+1. Run the `bmad-code-review` skill for {number}-{short_description}.
 2. Auto-accept all findings and apply fixes using your best engineering judgement.
 3. Commit any changes from the review.
 
@@ -469,11 +471,11 @@ Using the assessment report:
    📣 **Notify:** `🎉 Epic {current_epic_name} complete! Running retrospective in {RETRO_TIMER_SECONDS ÷ 60} min...`
 2. Start a timer using the **[Timer Pattern](references/coordinator/pattern-timer.md)** with:
    - **Duration:** `RETRO_TIMER_SECONDS`
-   - **Fire prompt:** `"BAD_RETRO_TIMER_FIRED — The retrospective countdown has elapsed. Auto-run the retrospective: spawn a MODEL_STANDARD subagent (yolo mode) to run /bmad-retrospective, accept all changes. Run Pre-Continuation Checks after it completes, then proceed to Phase 4 Step 3."`
+   - **Fire prompt:** `"BAD_RETRO_TIMER_FIRED — The retrospective countdown has elapsed. Auto-run the retrospective: spawn a MODEL_STANDARD subagent (yolo mode) to run the `bmad-retrospective` skill, accept all changes. Run Pre-Continuation Checks after it completes, then proceed to Phase 4 Step 3."`
    - **[C] label:** `Run retrospective now`
    - **[S] label:** `Skip retrospective`
    - **[X] label:** `Stop BAD`
-   - **[C] / FIRED action:** Spawn MODEL_STANDARD subagent (yolo mode) to run `/bmad-retrospective`. Accept all changes. Run Pre-Continuation Checks after.
+   - **[C] / FIRED action:** Spawn MODEL_STANDARD subagent (yolo mode) to run the `bmad-retrospective` skill. Accept all changes. Run Pre-Continuation Checks after.
    - **[S] action:** Skip retrospective.
    - **[X] action:** `CronDelete(JOB_ID)`, stop BAD, print final summary, and 📣 **Notify:** `🛑 BAD stopped by user.`
 3. Proceed to Step 3 after the retrospective decision resolves.
@@ -534,7 +536,7 @@ Read `references/coordinator/pattern-notify.md` whenever a `📣 Notify:` callou
 
 ## Timer Pattern
 
-Read `references/coordinator/pattern-timer.md` when instructed to start a timer. It covers both `TIMER_SUPPORT=true` (CronCreate) and `TIMER_SUPPORT=false` (prompt-based) paths.
+Read `references/coordinator/pattern-timer.md` when instructed to start a timer. It covers all three `TIMER_SUPPORT` paths: `cron` (Claude Code's `CronCreate`), `blocking-sleep` (Codex — shell `sleep N` auto-fires), and `prompt` (manual reply).
 
 ---
 

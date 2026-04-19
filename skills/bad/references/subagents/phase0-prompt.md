@@ -30,8 +30,8 @@ STEPS:
 2. Read `_bmad-output/planning-artifacts/epics.md` for dependency relationships of
    new stories. (Skip if no new stories.)
 
-3. Run /bmad-help with the epic context for new stories — ask it to map their
-   dependencies. Merge the result into the existing graph. (Skip if no new stories.)
+3. Run the `bmad-help` skill with the epic context for new stories — ask it to map
+   their dependencies. Merge the result into the existing graph. (Skip if no new stories.)
 
 4. GitHub integration — run `gh auth status` first. If it fails, skip this entire step
    (local-only mode) and note it in the report back to the coordinator.
