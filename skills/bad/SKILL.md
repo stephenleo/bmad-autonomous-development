@@ -186,7 +186,7 @@ Spawn before Phase 2 when starting a new epic (blocking — wait for completion 
 You are the epic test design agent for {current_epic_name}.
 Working directory: {repo_root}. Auto-approve all tool calls (yolo mode).
 
-1. Run /bmad-testarch-test-design for {current_epic_name}.
+1. Run the `bmad-testarch-test-design` skill for {current_epic_name}.
 2. Commit any new test plan files.
 
 Report: success or failure with error details.
@@ -239,7 +239,7 @@ Working directory: {repo_root}. Auto-approve all tool calls (yolo mode).
 2. Change into the worktree directory:
      cd {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}
 
-3. Run /bmad-create-story {number}-{short_description}.
+3. Run the `bmad-create-story` skill for {number}-{short_description}.
 
 4. Run "validate story {number}-{short_description}". For every finding,
    apply a fix directly to the story file using your best engineering judgement.
@@ -260,7 +260,7 @@ You are the Step 2 ATDD agent for story {number}-{short_description}.
 Working directory: {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}.
 Auto-approve all tool calls (yolo mode).
 
-1. Run /bmad-testarch-atdd {number}-{short_description}.
+1. Run the `bmad-testarch-atdd` skill for {number}-{short_description}.
 2. Commit any generated test files.
 3. Update sprint-status.yaml at the REPO ROOT:
      {repo_root}/_bmad-output/implementation-artifacts/sprint-status.yaml
@@ -277,7 +277,7 @@ You are the Step 3 developer for story {number}-{short_description}.
 Working directory: {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}.
 Auto-approve all tool calls (yolo mode).
 
-1. Run /bmad-dev-story {number}-{short_description}.
+1. Run the `bmad-dev-story` skill for {number}-{short_description}.
 2. Commit all changes when implementation is complete.
 3. Update sprint-status.yaml at the REPO ROOT:
      {repo_root}/_bmad-output/implementation-artifacts/sprint-status.yaml
@@ -294,7 +294,7 @@ You are the Step 4 test reviewer for story {number}-{short_description}.
 Working directory: {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}.
 Auto-approve all tool calls (yolo mode).
 
-1. Run /bmad-testarch-test-review {number}-{short_description}.
+1. Run the `bmad-testarch-test-review` skill for {number}-{short_description}.
 2. Apply all findings using your best engineering judgement.
 3. Commit any changes from the review.
 
@@ -309,7 +309,7 @@ You are the Step 5 code reviewer for story {number}-{short_description}.
 Working directory: {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}.
 Auto-approve all tool calls (yolo mode).
 
-1. Run /bmad-code-review {number}-{short_description}.
+1. Run the `bmad-code-review` skill for {number}-{short_description}.
 2. Auto-accept all findings and apply fixes using your best engineering judgement.
 3. Commit any changes from the review.
 
@@ -471,11 +471,11 @@ Using the assessment report:
    📣 **Notify:** `🎉 Epic {current_epic_name} complete! Running retrospective in {RETRO_TIMER_SECONDS ÷ 60} min...`
 2. Start a timer using the **[Timer Pattern](references/coordinator/pattern-timer.md)** with:
    - **Duration:** `RETRO_TIMER_SECONDS`
-   - **Fire prompt:** `"BAD_RETRO_TIMER_FIRED — The retrospective countdown has elapsed. Auto-run the retrospective: spawn a MODEL_STANDARD subagent (yolo mode) to run /bmad-retrospective, accept all changes. Run Pre-Continuation Checks after it completes, then proceed to Phase 4 Step 3."`
+   - **Fire prompt:** `"BAD_RETRO_TIMER_FIRED — The retrospective countdown has elapsed. Auto-run the retrospective: spawn a MODEL_STANDARD subagent (yolo mode) to run the `bmad-retrospective` skill, accept all changes. Run Pre-Continuation Checks after it completes, then proceed to Phase 4 Step 3."`
    - **[C] label:** `Run retrospective now`
    - **[S] label:** `Skip retrospective`
    - **[X] label:** `Stop BAD`
-   - **[C] / FIRED action:** Spawn MODEL_STANDARD subagent (yolo mode) to run `/bmad-retrospective`. Accept all changes. Run Pre-Continuation Checks after.
+   - **[C] / FIRED action:** Spawn MODEL_STANDARD subagent (yolo mode) to run the `bmad-retrospective` skill. Accept all changes. Run Pre-Continuation Checks after.
    - **[S] action:** Skip retrospective.
    - **[X] action:** `CronDelete(JOB_ID)`, stop BAD, print final summary, and 📣 **Notify:** `🛑 BAD stopped by user.`
 3. Proceed to Step 3 after the retrospective decision resolves.

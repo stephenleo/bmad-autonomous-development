@@ -55,6 +55,8 @@ Then run:
 /bad
 ```
 
+> In Codex, use `$bad` instead of `/bad` (Codex's command prefix is `$`, not `/`). The same applies to `/bad setup`, `/bad configure`, and runtime overrides.
+
 BAD can also be triggered naturally: *"run BAD"*, *"kick off the sprint"*, *"automate the sprint"*, *"start autonomous development"*, *"run the pipeline"*, *"start the dev pipeline"*
 
 Run with optional runtime overrides:
