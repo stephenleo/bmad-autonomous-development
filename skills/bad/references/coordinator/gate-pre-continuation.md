@@ -49,7 +49,7 @@ If `rate_limits.five_hour.used_percentage` is present and **> `API_FIVE_HOUR_THR
    date -d @{resets_at}
    ```
 2. Print: `"⏸ 5-hour usage limit at {usage}% — auto-pausing until reset at {reset_time}. BAD will resume automatically."`
-3. **If `TIMER_SUPPORT=true`:** compute a cron expression from the reset epoch and schedule a resume:
+3. **If `TIMER_SUPPORT=cron`** (or legacy `true`): compute a cron expression from the reset epoch and schedule a resume:
    ```bash
    # macOS
    date -r {resets_at} '+%M %H %d %m *'
@@ -63,7 +63,14 @@ If `rate_limits.five_hour.used_percentage` is present and **> `API_FIVE_HOUR_THR
 
    Save the job ID. Do not ask the user for input — resume automatically when `BAD_RATE_LIMIT_TIMER_FIRED` arrives.
 
-4. **If `TIMER_SUPPORT=false`:** print the reset time and wait for the user to reply when they're ready to continue. Then re-check the limit before proceeding.
+4. **If `TIMER_SUPPORT=blocking-sleep`:** compute the remaining seconds and block in the shell until reset:
+   ```bash
+   SLEEP_SECS=$(( {resets_at} - $(date +%s) ))
+   [ "$SLEEP_SECS" -gt 0 ] && sleep "$SLEEP_SECS"
+   ```
+   When `sleep` returns, re-read session state and re-check `five_hour.used_percentage` — if now below `API_FIVE_HOUR_THRESHOLD`, proceed to Check 3. If still too high (rare — usage sample hasn't refreshed), sleep another 60s and re-check.
+
+5. **If `TIMER_SUPPORT=prompt`** (or legacy `false`): print the reset time and wait for the user to reply when they're ready to continue. Then re-check the limit before proceeding.
 
 ---
 
@@ -79,7 +86,7 @@ If `rate_limits.seven_day.used_percentage` is present and **> `API_SEVEN_DAY_THR
    date -d @{resets_at}
    ```
 2. Print: `"⏸ 7-day usage limit at {usage}% — auto-pausing until reset at {reset_time}. BAD will resume automatically."`
-3. **If `TIMER_SUPPORT=true`:** compute a cron expression from the reset epoch and schedule a resume:
+3. **If `TIMER_SUPPORT=cron`** (or legacy `true`): compute a cron expression from the reset epoch and schedule a resume:
    ```bash
    # macOS
    date -r {resets_at} '+%M %H %d %m *'
@@ -93,7 +100,14 @@ If `rate_limits.seven_day.used_percentage` is present and **> `API_SEVEN_DAY_THR
 
    Save the job ID. Resume automatically when `BAD_RATE_LIMIT_TIMER_FIRED` arrives.
 
-4. **If `TIMER_SUPPORT=false`:** print the reset time and wait for the user to reply when ready. Then re-check before proceeding.
+4. **If `TIMER_SUPPORT=blocking-sleep`:** compute the remaining seconds and block in the shell until reset:
+   ```bash
+   SLEEP_SECS=$(( {resets_at} - $(date +%s) ))
+   [ "$SLEEP_SECS" -gt 0 ] && sleep "$SLEEP_SECS"
+   ```
+   When `sleep` returns, re-read session state and re-check `seven_day.used_percentage` — if now below `API_SEVEN_DAY_THRESHOLD`, proceed to Phase 0. If still too high, sleep another 60s and re-check.
+
+5. **If `TIMER_SUPPORT=prompt`** (or legacy `false`): print the reset time and wait for the user to reply when ready. Then re-check before proceeding.
 
 ---
 

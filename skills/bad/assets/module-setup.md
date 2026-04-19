@@ -201,9 +201,10 @@ If multiple harnesses are detected, repeat this step once per additional harness
 section clearly and store model/threshold values with a harness prefix (e.g.
 `claude_model_standard`).
 
-Automatically write without prompting:
-- Claude Code: `timer_support: true`, `monitor_support: true`
-- All other harnesses: `timer_support: false`, `monitor_support: false`
+Automatically write without prompting (based on the `current_harness` detected in Step 2):
+- Claude Code: `timer_support: cron`, `monitor_support: true`
+- `openai-codex`: `timer_support: blocking-sleep`, `monitor_support: false`
+- All other harnesses: `timer_support: prompt`, `monitor_support: false`
 
 ## Step 7: Write Files
 
@@ -220,7 +221,7 @@ Write a temp JSON file with collected answers structured as:
     "retro_timer_seconds": "600",
     "context_compaction_threshold": "80",
     "stale_timeout_minutes": "60",
-    "timer_support": true,
+    "timer_support": "<cron on Claude Code, blocking-sleep on openai-codex, prompt elsewhere>",
     "monitor_support": true,
     "model_standard": "<resolved in Step 6 — sonnet on Claude Code, gpt-5.3-codex default on openai-codex>",
     "model_quality": "<resolved in Step 6 — opus on Claude Code, gpt-5.4 default on openai-codex>",

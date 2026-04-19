@@ -56,7 +56,7 @@ Load base values from the `bad` section of `_bmad/config.yaml` at startup. Then 
 | `WAIT_TIMER_SECONDS` | `wait_timer_seconds` | `3600` | Post-batch wait before re-checking PR status (1 hr) |
 | `CONTEXT_COMPACTION_THRESHOLD` | `context_compaction_threshold` | `80` | Context window % at which to compact/summarise context |
 | `STALE_TIMEOUT_MINUTES` | `stale_timeout_minutes` | `60` | Minutes of subagent inactivity before watchdog alerts (0 = disabled) |
-| `TIMER_SUPPORT` | `timer_support` | `true` | When `true`, use native platform timers; when `false`, use prompt-based continuation |
+| `TIMER_SUPPORT` | `timer_support` | `cron` (Claude Code) / `blocking-sleep` (Codex) / `prompt` (others) | `cron` uses `CronCreate`; `blocking-sleep` uses a shell `sleep N` that auto-fires when it returns; `prompt` waits for a user reply. Legacy `true`→`cron`, `false`→`prompt` |
 | `MONITOR_SUPPORT` | `monitor_support` | `true` | When `true`, use the Monitor tool for CI and PR-merge polling; when `false`, fall back to manual polling loops (required for Bedrock/Vertex/Foundry) |
 | `API_FIVE_HOUR_THRESHOLD` | `api_five_hour_threshold` | `80` | (Claude Code) 5-hour rate limit % that triggers a pause |
 | `API_SEVEN_DAY_THRESHOLD` | `api_seven_day_threshold` | `95` | (Claude Code) 7-day rate limit % that triggers a pause |
@@ -68,7 +68,7 @@ Load base values from the `bad` section of `_bmad/config.yaml` at startup. Then 
 
 After resolving all values, print the active configuration so the user can confirm before Phase 0 begins:
 ```
-⚙️ BAD config: MAX_PARALLEL_STORIES=3, RUN_CI_LOCALLY=false, AUTO_PR_MERGE=false, MODEL_STANDARD=sonnet, MODEL_QUALITY=opus, TIMER_SUPPORT=true, ...
+⚙️ BAD config: MAX_PARALLEL_STORIES=3, RUN_CI_LOCALLY=false, AUTO_PR_MERGE=false, MODEL_STANDARD=sonnet, MODEL_QUALITY=opus, TIMER_SUPPORT=cron, ...
 ```
 
 ---
@@ -536,7 +536,7 @@ Read `references/coordinator/pattern-notify.md` whenever a `📣 Notify:` callou
 
 ## Timer Pattern
 
-Read `references/coordinator/pattern-timer.md` when instructed to start a timer. It covers both `TIMER_SUPPORT=true` (CronCreate) and `TIMER_SUPPORT=false` (prompt-based) paths.
+Read `references/coordinator/pattern-timer.md` when instructed to start a timer. It covers all three `TIMER_SUPPORT` paths: `cron` (Claude Code's `CronCreate`), `blocking-sleep` (Codex — shell `sleep N` auto-fires), and `prompt` (manual reply).
 
 ---
 

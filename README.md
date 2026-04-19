@@ -96,7 +96,7 @@ BAD is configured at install time (`/bad setup`) and stores settings in the `bad
 | `RETRO_TIMER_SECONDS` | `600` | Delay before auto-retrospective |
 | `CONTEXT_COMPACTION_THRESHOLD` | `80` | Context window % at which to compact context |
 | `STALE_TIMEOUT_MINUTES` | `60` | Minutes of subagent inactivity before watchdog alerts (0 = disabled) |
-| `TIMER_SUPPORT` | `true` | Use native platform timers; `false` for prompt-based continuation |
+| `TIMER_SUPPORT` | `cron` (Claude Code) / `blocking-sleep` (Codex) / `prompt` (others) | `cron` uses `CronCreate`; `blocking-sleep` uses a shell `sleep N` (auto-fires when it returns); `prompt` waits for a user reply. Legacy `true`/`false` still accepted |
 | `MONITOR_SUPPORT` | `true` | Use the Monitor tool for CI/PR-merge polling; `false` for Bedrock/Vertex/Foundry |
 | `API_FIVE_HOUR_THRESHOLD` | `80` | (Claude Code) 5-hour usage % at which to pause |
 | `API_SEVEN_DAY_THRESHOLD` | `95` | (Claude Code) 7-day usage % at which to pause |
