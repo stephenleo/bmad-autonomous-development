@@ -11,7 +11,7 @@ If `NOTIFY_SOURCE` is not `"terminal"` (i.e. a channel like Telegram is configur
 Read the current session state using the Bash tool:
 
 ```bash
-cat "${TMPDIR:-/tmp}/bad-session-state.json" 2>/dev/null || echo "{}"
+cat ".claude/bad-session-state.json" 2>/dev/null || echo "{}"
 ```
 
 Parse the output as JSON. The relevant fields:
@@ -22,7 +22,7 @@ Parse the output as JSON. The relevant fields:
 - `rate_limits.seven_day.used_percentage` — 0–100 (Claude Code only)
 - `rate_limits.seven_day.resets_at` — Unix epoch seconds when the 7-day window resets
 
-**If the file does not exist** — print `"⚠️ Pre-Continuation: session state unavailable (bad-session-state.json missing — check that the session-state hook is installed via /bad setup Step 3). Skipping rate limit checks."` and proceed.
+**If the file does not exist** — print `"⚠️ Pre-Continuation: session state unavailable (.claude/bad-session-state.json missing — check that the session-state hook is installed via /bad setup Step 3). Skipping rate limit checks."` and proceed.
 
 **If a specific field is absent** — silently skip only that check. If the file exists but `rate_limits` is entirely absent, print `"⚠️ Pre-Continuation: rate limit data not in session state — skipping usage checks."` once (not on every gate).
 
@@ -49,12 +49,12 @@ If `rate_limits.five_hour.used_percentage` is present and **> `API_FIVE_HOUR_THR
    date -d @{resets_at}
    ```
 2. Print: `"⏸ 5-hour usage limit at {usage}% — auto-pausing until reset at {reset_time}. BAD will resume automatically."`
-3. **If `TIMER_SUPPORT=cron`** (or legacy `true`): compute a cron expression from the reset epoch and schedule a resume:
+3. **If `TIMER_SUPPORT=cron`** (or legacy `true`): compute a cron expression 10 minutes after the reset epoch (to avoid a false positive if the reset lands slightly late) and schedule a resume:
    ```bash
    # macOS
-   date -r {resets_at} '+%M %H %d %m *'
+   date -r $(( {resets_at} + 600 )) '+%M %H %d %m *'
    # Linux
-   date -d @{resets_at} '+%M %H %d %m *'
+   date -d @$(( {resets_at} + 600 )) '+%M %H %d %m *'
    ```
    Call `CronCreate`:
    - `cron`: expression from above
@@ -86,12 +86,12 @@ If `rate_limits.seven_day.used_percentage` is present and **> `API_SEVEN_DAY_THR
    date -d @{resets_at}
    ```
 2. Print: `"⏸ 7-day usage limit at {usage}% — auto-pausing until reset at {reset_time}. BAD will resume automatically."`
-3. **If `TIMER_SUPPORT=cron`** (or legacy `true`): compute a cron expression from the reset epoch and schedule a resume:
+3. **If `TIMER_SUPPORT=cron`** (or legacy `true`): compute a cron expression 10 minutes after the reset epoch (to avoid a false positive if the reset lands slightly late) and schedule a resume:
    ```bash
    # macOS
-   date -r {resets_at} '+%M %H %d %m *'
+   date -r $(( {resets_at} + 600 )) '+%M %H %d %m *'
    # Linux
-   date -d @{resets_at} '+%M %H %d %m *'
+   date -d @$(( {resets_at} + 600 )) '+%M %H %d %m *'
    ```
    Call `CronCreate`:
    - `cron`: expression from above

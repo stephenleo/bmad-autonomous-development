@@ -1,16 +1,18 @@
 #!/bin/bash
 # BAD session-state capture — installed to {project-root}/.claude/bad-statusline.sh
 # during /bad setup. Configured as the Claude Code statusLine script so it runs
-# after every API response and writes the session JSON to a temp file that the
-# BAD coordinator reads during Pre-Continuation Checks.
+# after every API response and writes the session JSON to .claude/bad-session-state.json
+# (next to this script) that the BAD coordinator reads during Pre-Continuation Checks.
 #
 # To chain with an existing statusline script:
 #   SESSION_JSON=$(cat)
 #   echo "$SESSION_JSON" | /path/to/your-existing-script.sh
-#   echo "$SESSION_JSON" > "${TMPDIR:-/tmp}/bad-session-state.json"
+#   SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+#   echo "$SESSION_JSON" > "$SCRIPT_DIR/bad-session-state.json"
 
 SESSION_JSON=$(cat)
-echo "$SESSION_JSON" > "${TMPDIR:-/tmp}/bad-session-state.json"
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+echo "$SESSION_JSON" > "$SCRIPT_DIR/bad-session-state.json"
 # Output nothing — add your own status text here if desired, e.g.:
 # python3 -c "
 # import sys, json
