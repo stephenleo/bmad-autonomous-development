@@ -6,7 +6,11 @@ Run these checks **in order** at every gate point: between Phase 2 steps, after 
 
 If `NOTIFY_SOURCE` is not `"terminal"` (i.e. a channel like Telegram is configured), run `/reload-plugins` now. This is a **built-in Claude Code CLI command** — do NOT invoke it via the Skill tool, just execute it directly. This is a no-op when the plugin is already connected, and silently restores it when it has dropped. No user-visible output needed unless the channel was actually missing.
 
+**OpenCode:** `/reload-plugins` is not available — skip this sub-step.
+
 **Harness note:** Checks 2 and 3 require session state data. On Claude Code, this is available via the session-state hook installed by `/bad setup` (Step 3). On other harnesses this data may not be available — each check gracefully skips if its fields are absent.
+
+**OpenCode:** OpenCode does not have a session-state hook. On OpenCode, skip Checks 2 and 3 entirely (rate limit tracking is not available). Context window monitoring (Check 1) is also skipped — OpenCode's `compaction.auto: true` handles context management automatically.
 
 Read the current session state using the Bash tool:
 
@@ -30,6 +34,8 @@ Parse the output as JSON. The relevant fields:
 
 ## Check 1: Context Window
 
+**OpenCode:** Skip — `compaction.auto: true` handles context management.
+
 If `context_window.used_percentage` **> `CONTEXT_COMPACTION_THRESHOLD`**:
 
 1. Print: `"⚠️ Context window at {usage}% — compacting before continuing."`
@@ -38,6 +44,8 @@ If `context_window.used_percentage` **> `CONTEXT_COMPACTION_THRESHOLD`**:
 ---
 
 ## Check 2: Five-Hour Usage Limit
+
+**OpenCode:** Skip — rate limit tracking not available. Monitor terminal output manually if needed.
 
 If `rate_limits.five_hour.used_percentage` is present and **> `API_FIVE_HOUR_THRESHOLD`**:
 
@@ -68,6 +76,8 @@ If `rate_limits.five_hour.used_percentage` is present and **> `API_FIVE_HOUR_THR
 ---
 
 ## Check 3: Seven-Day Usage Limit
+
+**OpenCode:** Skip — rate limit tracking not available.
 
 If `rate_limits.seven_day.used_percentage` is present and **> `API_SEVEN_DAY_THRESHOLD`**:
 

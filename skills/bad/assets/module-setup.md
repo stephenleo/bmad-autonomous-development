@@ -31,6 +31,7 @@ Check for the presence of harness directories at the project root:
 | `.cursor/` | `cursor` |
 | `.github/skills/` | `github-copilot` (use `/skills/` subfolder to avoid false positive on bare `.github/`) |
 | `.codex/` | `openai-codex` |
+| `.opencode/` | `opencode` |
 | `.gemini/` | `gemini` |
 | `.windsurf/` | `windsurf` |
 | `.cline/` | `cline` |
@@ -167,6 +168,10 @@ Claude Code settings:
   model_quality            [<value>] — Model for code review
   api_five_hour_threshold  [<value>] — 5-hour usage % to pause
   api_seven_day_threshold  [<value>] — 7-day usage % to pause
+
+OpenCode settings:
+  opencode_model_standard  [<value>] — Model for story/dev/PR steps (informational)
+  opencode_model_quality   [<value>] — Model for code review (informational)
 ```
 
 Then invoke the **`AskUserQuestion`** tool (your only output for this turn — do not proceed
@@ -196,6 +201,7 @@ section clearly and store model/threshold values with a harness prefix (e.g.
 
 Automatically write without prompting:
 - Claude Code: `timer_support: true`, `monitor_support: true`
+- OpenCode: `timer_support: false`, `monitor_support: false` (uses background bash sleep + bash polling instead)
 - All other harnesses: `timer_support: false`, `monitor_support: false`
 
 ## Step 7: Write Files
@@ -218,7 +224,9 @@ Write a temp JSON file with collected answers structured as:
     "model_standard": "sonnet",
     "model_quality": "opus",
     "api_five_hour_threshold": "80",
-    "api_seven_day_threshold": "95"
+    "api_seven_day_threshold": "95",
+    "opencode_model_standard": "informational",
+    "opencode_model_quality": "informational"
   }
 }
 ```
