@@ -13,6 +13,25 @@ The `setup`/`configure` argument always triggers `./assets/module-setup.md`, eve
 
 After setup completes (or if config already exists), load the `bad` config and continue to Startup below.
 
+## Harness Detection
+
+Detect which harness is running by checking for harness directories at the project root:
+
+| Directory | Harness |
+|-----------|---------|
+| `.claude/` | `claude-code` |
+| `.opencode/` | `opencode` |
+| `.cursor/` | `cursor` |
+| `.github/skills/` | `github-copilot` |
+| `.codex/` | `openai-codex` |
+| `.gemini/` | `gemini` |
+| `.windsurf/` | `windsurf` |
+| `.cline/` | `cline` |
+
+Store the result as `HARNESS`. If multiple harnesses exist, use the first detected. If none detected, default to `claude-code`.
+
+Use `HARNESS` throughout the pipeline to select harness-specific behavior (agent spawning, timer patterns, notification patterns).
+
 You are a **coordinator**. You delegate every step to subagents via the **Agent tool**. You never read files, run git/gh commands, or write to disk yourself.
 
 **Coordinator-only responsibilities:**
@@ -61,6 +80,8 @@ Load base values from the `bad` section of `_bmad/config.yaml` at startup. Then 
 | `API_FIVE_HOUR_THRESHOLD` | `api_five_hour_threshold` | `80` | (Claude Code) 5-hour rate limit % that triggers a pause |
 | `API_SEVEN_DAY_THRESHOLD` | `api_seven_day_threshold` | `95` | (Claude Code) 7-day rate limit % that triggers a pause |
 | `API_USAGE_THRESHOLD` | `api_usage_threshold` | `80` | (Other harnesses) Generic API usage % that triggers a pause |
+| `OPENCODE_MODEL_STANDARD` | `opencode_model_standard` | `informational` | (OpenCode) Model for story/dev/PR steps — informational only, actual model from opencode.json |
+| `OPENCODE_MODEL_QUALITY` | `opencode_model_quality` | `informational` | (OpenCode) Model for code review — informational only, actual model from opencode.json |
 | `RUN_CI_LOCALLY` | `run_ci_locally` | `false` | When `true`, skip GitHub Actions and always run the local CI fallback |
 | `AUTO_PR_MERGE` | `auto_pr_merge` | `false` | When `true`, auto-merge batch PRs sequentially (lowest → highest) before Phase 4 |
 
@@ -124,6 +145,8 @@ Before spawning the subagent, **create the full initial task list** using TaskCr
 
 Call the **Agent tool** with `model: MODEL_STANDARD`, `description: "Phase 0: dependency graph"`, and this prompt. The coordinator waits for the report.
 
+**OpenCode:** Call the **task tool** with `subagent_type: "coder"`, `description: "Phase 0: dependency graph"`, and this prompt. The coordinator waits for the report.
+
 ```
 Read `references/subagents/phase0-prompt.md` and follow its instructions exactly.
 ```
@@ -180,6 +203,8 @@ Pure coordinator logic — no file reads, no tool calls.
 
 Spawn before Phase 2 when starting a new epic (blocking — wait for completion before story pipelines begin):
 
+**OpenCode:** Call the **task tool** with `subagent_type: "coder"`, `description: "Epic-Start test design"`, and this prompt.
+
 ```
 You are the epic test design agent for {current_epic_name}.
 Working directory: {repo_root}. Auto-approve all tool calls (yolo mode).
@@ -207,7 +232,7 @@ Launch all stories' Step 1 subagents **in a single message** (parallel). Each st
 | `review`        | Step 4     | Steps 1–3     |
 | `done`          | —          | all           |
 
-**After each step — mandatory gate (never skip, even with parallel stories):** 📣 **Notify** the step result (formats below), then run **Pre-Continuation Checks** (`references/coordinator/gate-pre-continuation.md`). Only after all checks pass → spawn the next subagent.
+**After each step — mandatory gate (never skip, even with parallel stories):** 📣 **Notify** the step result (formats below), then run **Pre-Continuation Checks** (`references/coordinator/gate-pre-continuation.md` for Claude Code, or `references/opencode/setup-session-state.md` for OpenCode — OpenCode skips all checks due to auto-compaction). Only after all checks pass → spawn the next subagent.
 
 📣 **Notify per step** as each step completes:
 - Success: `✅ Story {number}: Step {N} — {step name}`
@@ -223,6 +248,7 @@ Step names: Step 1 — Create, Step 2 — ATDD, Step 3 — Develop, Step 4 — T
 ### Step 1: Create Story (`MODEL_STANDARD`)
 
 Spawn with model `MODEL_STANDARD` (yolo mode):
+**OpenCode:** Call the **task tool** with `subagent_type: "coder"`, `description: "Step 1: create story {number}"`, and this prompt.
 ```
 You are the Step 1 story creator for story {number}-{short_description}.
 Working directory: {repo_root}. Auto-approve all tool calls (yolo mode).
@@ -253,6 +279,7 @@ Report: success or failure with error details.
 ### Step 2: ATDD (`MODEL_STANDARD`)
 
 Spawn with model `MODEL_STANDARD` (yolo mode):
+**OpenCode:** Call the **task tool** with `subagent_type: "coder"`, `description: "Step 2: ATDD {number}"`, and this prompt.
 ```
 You are the Step 2 ATDD agent for story {number}-{short_description}.
 Working directory: {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}.
@@ -270,6 +297,7 @@ Report: success or failure with error details.
 ### Step 3: Develop Story (`MODEL_STANDARD`)
 
 Spawn with model `MODEL_STANDARD` (yolo mode):
+**OpenCode:** Call the **task tool** with `subagent_type: "coder"`, `description: "Step 3: develop {number}"`, and this prompt.
 ```
 You are the Step 3 developer for story {number}-{short_description}.
 Working directory: {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}.
@@ -287,6 +315,7 @@ Report: success or failure with error details.
 ### Step 4: Test Review (`MODEL_STANDARD`)
 
 Spawn with model `MODEL_STANDARD` (yolo mode):
+**OpenCode:** Call the **task tool** with `subagent_type: "coder"`, `description: "Step 4: test review {number}"`, and this prompt.
 ```
 You are the Step 4 test reviewer for story {number}-{short_description}.
 Working directory: {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}.
@@ -302,6 +331,7 @@ Report: success or failure with error details.
 ### Step 5: Code Review (`MODEL_QUALITY`)
 
 Spawn with model `MODEL_QUALITY` (yolo mode):
+**OpenCode:** Call the **task tool** with `subagent_type: "reviewer"`, `description: "Step 5: code review {number}"`, and this prompt.
 ```
 You are the Step 5 code reviewer for story {number}-{short_description}.
 Working directory: {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}.
@@ -317,6 +347,7 @@ Report: success or failure with error details.
 ### Step 6: PR & CI (`MODEL_STANDARD`)
 
 Spawn with model `MODEL_STANDARD` (yolo mode):
+**OpenCode:** Call the **task tool** with `subagent_type: "coder"`, `description: "Step 6: PR + CI {number}"`, and this prompt.
 ```
 You are the Step 6 PR and CI agent for story {number}-{short_description}.
 Working directory: {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}.
@@ -365,6 +396,7 @@ Report: success or failure, and the PR number/URL if opened.
 ### Step 7: PR Code Review (`MODEL_STANDARD`)
 
 Spawn with model `MODEL_STANDARD` (yolo mode):
+**OpenCode:** Call the **task tool** with `subagent_type: "coder"`, `description: "Step 7: PR review {number}"`, and this prompt.
 ```
 You are the Step 7 PR code reviewer for story {number}-{short_description}.
 Working directory: {repo_root}/{WORKTREE_BASE_PATH}/story-{number}-{short_description}.
@@ -398,6 +430,7 @@ After all batch stories complete Phase 2, merge every successful story's PR into
 2. For each story **sequentially** (wait for each to complete before starting the next):
    - Pull latest main at the repo root: spawn a quick subagent or include in the merge subagent.
    - Spawn a `MODEL_STANDARD` subagent (yolo mode) with the instructions from `references/subagents/phase3-merge.md`.
+   - **OpenCode:** Call the **task tool** with `subagent_type: "coder"`, `description: "Phase 3: merge {number}"`, with instructions from `references/subagents/phase3-merge.md`.
    - Run Pre-Continuation Checks after the subagent completes. If it fails (unresolvable conflict, CI blocking), report the error and continue to the next story.
 3. Print a merge summary (coordinator formats from subagent reports):
    ```
@@ -415,6 +448,7 @@ After all batch stories complete Phase 2, merge every successful story's PR into
 ```
 
 4. Spawn a **cleanup subagent** (`MODEL_STANDARD`, yolo mode):
+   **OpenCode:** Call the **task tool** with `subagent_type: "coder"`, `description: "Phase 3: cleanup"`, and this prompt.
    ```
    Post-merge cleanup. Auto-approve all tool calls (yolo mode).
    Read `references/subagents/phase3-cleanup.md` and follow its instructions exactly.
@@ -454,6 +488,7 @@ Or if no stories were ready: `⏸ No stories ready — waiting for PRs to merge`
 From Phase 2 results, collect the batch stories and their PR numbers (e.g. `8.1 → #101, 8.2 → #102`). Pass these as `BATCH_STORIES_WITH_PRS` in the assessment prompt below.
 
 Spawn an **assessment subagent** (`MODEL_STANDARD`, yolo mode):
+**OpenCode:** Call the **task tool** with `subagent_type: "coder"`, `description: "Phase 4: assessment"`, and this prompt.
 ```
 Epic completion assessment. Auto-approve all tool calls (yolo mode).
 BATCH_STORIES_WITH_PRS: {coordinator substitutes: "story → #PR" pairs from this batch, one per line}
@@ -470,10 +505,12 @@ Using the assessment report:
 2. Start a timer using the **[Timer Pattern](references/coordinator/pattern-timer.md)** with:
    - **Duration:** `RETRO_TIMER_SECONDS`
    - **Fire prompt:** `"BAD_RETRO_TIMER_FIRED — The retrospective countdown has elapsed. Auto-run the retrospective: spawn a MODEL_STANDARD subagent (yolo mode) to run /bmad-retrospective, accept all changes. Run Pre-Continuation Checks after it completes, then proceed to Phase 4 Step 3."`
+   - **OpenCode:** Call the **task tool** with `subagent_type: "coder"`, `description: "Retrospective"`, to run /bmad-retrospective.
    - **[C] label:** `Run retrospective now`
    - **[S] label:** `Skip retrospective`
    - **[X] label:** `Stop BAD`
    - **[C] / FIRED action:** Spawn MODEL_STANDARD subagent (yolo mode) to run `/bmad-retrospective`. Accept all changes. Run Pre-Continuation Checks after.
+   - **OpenCode:** Call the **task tool** with `subagent_type: "coder"`, `description: "Retrospective"`, to run `/bmad-retrospective`.
    - **[S] action:** Skip retrospective.
    - **[X] action:** `CronDelete(JOB_ID)`, stop BAD, print final summary, and 📣 **Notify:** `🛑 BAD stopped by user.`
 3. Proceed to Step 3 after the retrospective decision resolves.
@@ -528,25 +565,33 @@ Using the assessment report from Step 2, follow the applicable branch:
 
 ## Notify Pattern
 
-Read `references/coordinator/pattern-notify.md` whenever a `📣 Notify:` callout appears. It covers Telegram and terminal output.
+**Claude Code:** Read `references/coordinator/pattern-notify.md` whenever a `📣 Notify:` callout appears. It covers Telegram and terminal output.
+
+**OpenCode:** Read `references/opencode/pattern-notify.md` whenever a `📣 Notify:` callout appears. It uses print-only notifications (terminal output).
 
 ---
 
 ## Timer Pattern
 
-Read `references/coordinator/pattern-timer.md` when instructed to start a timer. It covers both `TIMER_SUPPORT=true` (CronCreate) and `TIMER_SUPPORT=false` (prompt-based) paths.
+**Claude Code:** Read `references/coordinator/pattern-timer.md` when instructed to start a timer. It covers both `TIMER_SUPPORT=true` (CronCreate) and `TIMER_SUPPORT=false` (prompt-based) paths.
+
+**OpenCode:** Read `references/opencode/pattern-timer.md` when instructed to start a timer. It uses background `sleep` processes with PID files and signal files for timer management.
 
 ---
 
 ## Monitor Pattern
 
-Read `references/coordinator/pattern-monitor.md` when `MONITOR_SUPPORT=true`. It covers CI status polling (Step 6) and PR-merge watching (Phase 4 Branch B), plus the `MONITOR_SUPPORT=false` fallback for each.
+**Claude Code:** Read `references/coordinator/pattern-monitor.md` when `MONITOR_SUPPORT=true`. It covers CI status polling (Step 6) and PR-merge watching (Phase 4 Branch B), plus the `MONITOR_SUPPORT=false` fallback for each.
+
+**OpenCode:** Read `references/opencode/pattern-monitor.md` for CI status polling and PR-merge watching. OpenCode uses bash polling loops with `gh` CLI instead of the Monitor tool.
 
 ---
 
 ## Watchdog Pattern
 
-Read `references/coordinator/pattern-watchdog.md` when `MONITOR_SUPPORT=true` and the activity log hook is installed (Step 4 of setup). Use it before spawning long-running Phase 2 subagents (Steps 2, 3, 4, 5) to detect hung agents via activity log monitoring.
+**Claude Code:** Read `references/coordinator/pattern-watchdog.md` when `MONITOR_SUPPORT=true` and the activity log hook is installed (Step 4 of setup). Use it before spawning long-running Phase 2 subagents (Steps 2, 3, 4, 5) to detect hung agents via activity log monitoring.
+
+**OpenCode:** Read `references/opencode/pattern-watchdog.md` for hung-agent detection. OpenCode uses git worktree file modification time polling instead of activity log monitoring.
 
 ---
 
@@ -569,4 +614,4 @@ Read `references/coordinator/pattern-gh-curl-fallback.md` when any `gh` command 
 9. **sprint-status.yaml is updated by step subagents** — each step subagent writes to the repo root copy. The coordinator never does this directly.
 10. **On failure** — report the error, halt that story. No auto-retry. **Exception:** rate/usage limit failures → run Pre-Continuation Checks (auto-pauses until reset) then retry.
 11. **Issue all Step 1 subagent calls in one response** when Phase 2 begins. After each story's Step 1 completes, issue that story's Step 2 — never wait for all stories' Step 1 to finish before issuing any Step 2. This rolling-start rule applies to all sequential steps within a story.
-12. **Pre-Continuation Checks are mandatory at every gate** — run `references/coordinator/gate-pre-continuation.md` between every step spawn, after each Phase 3 merge, and before every Phase 0 re-entry. Never skip or defer these checks, even when handling multiple parallel story completions simultaneously.
+12. **Pre-Continuation Checks are mandatory at every gate** — run `references/coordinator/gate-pre-continuation.md` (Claude Code) or skip checks on OpenCode (auto-compaction handles everything) between every step spawn, after each Phase 3 merge, and before every Phase 0 re-entry. Never skip or defer these checks, even when handling multiple parallel story completions simultaneously.

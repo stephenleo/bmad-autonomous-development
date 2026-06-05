@@ -44,3 +44,13 @@ stale_timeout_minutes:
   prompt: "Minutes of subagent inactivity before watchdog alerts (0 = disabled)"
   default: "60"
   result: "{value}"
+
+opencode_model_standard:
+  prompt: "OpenCode model for story/dev/PR steps (informational — actual model from opencode.json)"
+  default: "informational"
+  result: "{value}"
+
+opencode_model_quality:
+  prompt: "OpenCode model for code review (informational — actual model from opencode.json)"
+  default: "informational"
+  result: "{value}"
