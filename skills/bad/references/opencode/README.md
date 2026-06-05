@@ -20,10 +20,10 @@ This directory contains reference documentation for BAD's OpenCode-specific impl
 
 OpenCode introduces the following config variables (set in the BAD config, e.g. `opencode.json` or environment):
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `OPENCODE_MODEL_STANDARD` | `"deepseek-v4-flash"` | Model used for standard coder/reviewer subagents |
-| `OPENCODE_MODEL_QUALITY` | `"deepseek-v4-flash"` | Model used for architect/designer (higher-quality) tasks |
+| Variable | Description |
+|----------|-------------|
+| `OPENCODE_MODEL_STANDARD` | Model used for standard coder/reviewer subagents |
+| `OPENCODE_MODEL_QUALITY` | Model used for architect/designer (higher-quality) tasks |
 
 These replace the Claude Code-specific model selection which was tied to `.claude/settings.json`.
 
